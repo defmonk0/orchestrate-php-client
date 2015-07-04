@@ -33,7 +33,7 @@ class Client
    * @param string                     $apiKey
    * @param GuzzleHttp\ClientInterface $httpClient
    */
-  public function __construct($apiKey, GuzzleHttp\ClientInterface $httpClient = null)
+  public function __construct($apiKey, $baseUrl = 'https://api.orchestrate.io/{version}/', GuzzleHttp\ClientInterface $httpClient = null)
   {
     $this->apiKey = $apiKey;
 
@@ -41,7 +41,7 @@ class Client
       $this->httpClient = $httpClient;
     } else {
       $this->httpClient = new GuzzleHttp\Client([
-        'base_url' => ['https://api.orchestrate.io/{version}/', ['version' => 'v0']],
+        'base_url' => [$baseUrl, ['version' => 'v0']],
         'defaults' => ['auth' => [$apiKey, '']],
       ]);
     }
@@ -60,7 +60,9 @@ class Client
   {
     try {
       if ($op instanceof DeleteOperationInterface) {
-        $response = $this->httpClient->delete($op->getEndpoint());
+        $response = $this->httpClient->delete($op->getEndpoint(), [
+          'headers' => $op->getHeaders(),
+        ]);
       } elseif ($op instanceof PostOperationInterface) {
         $response = $this->httpClient->post($op->getEndpoint(), [
           'headers' => $op->getHeaders(),
@@ -79,9 +81,10 @@ class Client
       } else {
         $response = $this->httpClient->get($op->getEndpoint());
       }
-    } catch (GuzzleHttp\Exception\BadResponseException $e) {
-      // Client or server error
-      return null;
+    } catch (GuzzleHttp\Exception\ClientException $e) {
+      throw new Exception\ClientException('ClientException occurred in request to Orchestrate: ' . $e->getMessage(), $e->getCode(), $e);
+    } catch (GuzzleHttp\Exception\ServerException $e) {
+      throw new Exception\ServerException('ServerException occurred in request to Orchestrate: ' . $e->getMessage(), $e->getCode(), $e);
     }
 
     $refLink = null;
