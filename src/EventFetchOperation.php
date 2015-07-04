@@ -7,25 +7,40 @@ class EventFetchOperation implements OperationInterface
   protected $collection;
   protected $key;
   protected $type;
-  protected $timestamp;
-  protected $ordinal;
+  protected $start;
+  protected $end;
 
-  public function __construct($collection, $key, $type, $timestamp, $ordinal)
+  public function __construct($collection, $key, $type, $start = null, $end = null)
   {
     $this->collection = $collection;
     $this->key = $key;
     $this->type = $type;
-    $this->timestamp = $timestamp;
-    $this->ordinal = $ordinal;
+    $this->start = $start;
+    $this->end = $end;
   }
 
   public function getEndpoint()
   {
-    return $this->collection  . '/' . $this->key . '/events/' . $this->type . '/' . $this->timestamp . '/' . $this->ordinal;
+    $queryParams = $this->getQueryParams();
+
+    return $this->collection  . '/' . $this->key . '/events/' . $this->type . (!empty($queryParams) ? '?' . http_build_query($queryParams) : '');
+  }
+
+  protected function getQueryParams()
+  {
+    $queryParams = [];
+    if ($this->start) {
+      $queryParams['start'] = $this->start;
+    }
+    if ($this->end) {
+      $queryParams['end'] = $this->end;
+    }
+
+    return $queryParams;
   }
 
   public function getObjectFromResponse($ref, $location = null, $value = null, $rawValue = null)
   {
-    return new EventObject($this->collection, $this->key, $this->type, $ref, $value, $rawValue);
+    return new EventObject($this->collection, $this->key, $this->type, $value, $rawValue);
   }
 }

@@ -5,15 +5,6 @@ A PHP client for [Orchestrate.io](http://orchestrate.io).
 [![Build Status](https://travis-ci.org/SocalNick/orchestrate-php-client.png?branch=master)](https://travis-ci.org/SocalNick/orchestrate-php-client)
 [![Latest Stable Version](https://poser.pugx.org/socalnick/orchestrate-php-client/v/stable.svg)](https://packagist.org/packages/socalnick/orchestrate-php-client) [![Total Downloads](https://poser.pugx.org/socalnick/orchestrate-php-client/downloads.svg)](https://packagist.org/packages/socalnick/orchestrate-php-client) [![Latest Unstable Version](https://poser.pugx.org/socalnick/orchestrate-php-client/v/unstable.svg)](https://packagist.org/packages/socalnick/orchestrate-php-client) [![License](https://poser.pugx.org/socalnick/orchestrate-php-client/license.svg)](https://packagist.org/packages/socalnick/orchestrate-php-client)
 
-**Table of Contents**
-
-- [Installation](#installation)
-- [Creating a Client](#creating-a-client)
-- [Key / Value Operations](#key--value-operations)
-- [Search](#search)
-- [Events](#events)
-- [Graph](#graph)
-
 # Installation
 
 ```
@@ -22,16 +13,9 @@ $ composer require socalnick/orchestrate-php-client
 
 # Creating a Client
 
-## Default to Amazon US East
 ```php
 use SocalNick\Orchestrate\Client;
 $client = new Client('your-api-key');
-```
-
-## Use Amazon EU West
-```php
-use SocalNick\Orchestrate\Client;
-$client = new Client('your-api-key', 'https://api.aws-eu-west-1.orchestrate.io/{version}/');
 ```
 
 # Key / Value Operations
@@ -198,78 +182,34 @@ $max = $searchResult->getValue()['aggregates'][0]['statistics']['max']; // 9.3
 
 # Events
 
-## Post defaults to now
+## Put defaults to now
 ```php
-use SocalNick\Orchestrate\EventPostOperation;
-$evPostOp = new EventPostOperation("films", "pulp_fiction", "comment", json_encode(array("message" => "This is my favorite movie!")));
-$evPostResult = $client->execute($evPostOp); // instance_of SocalNick\Orchestrate\EventUpsertResult
+use SocalNick\Orchestrate\EventPutOperation;
+$evPutOp = new EventPutOperation("films", "pulp_fiction", "comment", json_encode(array("message" => "This is my favorite movie!")));
+$result = $client->execute($evPutOp); // true
 ```
 
-## Post with timestamp
+## Put with timestamp
 ```php
-use SocalNick\Orchestrate\EventPostOperation;
-$evPostOp = new EventPostOperation("films", "pulp_fiction", "comment", json_encode(array("message" => "This is my favorite movie!")), 1395029140000);
-$evPostResult = $client->execute($evPostOp); // instance_of SocalNick\Orchestrate\EventUpsertResult
+use SocalNick\Orchestrate\EventPutOperation;
+$evPutOp = new EventPutOperation("films", "pulp_fiction", "comment", json_encode(array("message" => "This is my favorite movie!")), 1395029140000);
+$result = $client->execute($evPutOp); // true
 ```
 
-## Get (an individual event)
+## Get
 ```php
 use SocalNick\Orchestrate\EventFetchOperation;
-$evFetchOp = new EventFetchOperation("films", "pulp_fiction", "comment", $evPostResult->getTimestamp(), $evPostResult->getOrdinal());
+$evFetchOp = new EventFetchOperation("films", "pulp_fiction", "comment");
 $evObject = $client->execute($evFetchOp);
-$message = $evObject->getValue()['value']['message']; // This is my favorite movie!
+$count = $evObject->count(); // 2
 ```
 
-## Put (update an existing event)
+## Get with start and end
 ```php
-use SocalNick\Orchestrate\EventPutOperation;
-$evPutOp = new EventPutOperation("films", "pulp_fiction", "comment", json_encode(array("message" => "This is still my favorite movie!")), $evPostResult->getTimestamp(), $evPostResult->getOrdinal());
-$evPutResult = $client->execute($evPutOp); // instance_of SocalNick\Orchestrate\EventUpsertResult
-```
-
-## Put with ref (update an existing event if ref matches)
-```php
-use SocalNick\Orchestrate\EventPutOperation;
-$evPutOp = new EventPutOperation("films", "pulp_fiction", "comment", json_encode(array("message" => "Seriously, this is still my favorite movie!")), $evPostResult->getTimestamp(), $evPostResult->getOrdinal(), $evPutResult->getRef());
-$evPutResult = $client->execute($evPutOp); // instance_of SocalNick\Orchestrate\EventUpsertResult
-```
-
-## Delete
-```php
-use SocalNick\Orchestrate\EventDeleteOperation;
-$evDeleteOp = new EventDeleteOperation("films", "pulp_fiction", "comment", $evPutResult->getTimestamp(), $evPutResult->getOrdinal(), true);
-$result = $client->execute($evDeleteOp); // true
-```
-
-## Delete with ref (only delete if ref matches)
-```php
-use SocalNick\Orchestrate\EventDeleteOperation;
-$evDeleteOp = new EventDeleteOperation("films", "pulp_fiction", "comment", $evPutResult->getTimestamp(), $evPutResult->getOrdinal(), true, $evPutResult->getRef());
-$result = $client->execute($evDeleteOp); // true
-```
-
-## List
-```php
-use SocalNick\Orchestrate\EventListOperation;
-$evListOp = new EventListOperation("films", "pulp_fiction", "comment");
-$evListObject = $client->execute($evListOp);
-$evListObject->count(); // 10
-```
-
-## List with limit
-```php
-use SocalNick\Orchestrate\EventListOperation;
-$evListOp = new EventListOperation("films", "pulp_fiction", "comment", 20);
-$evListObject = $client->execute($evListOp);
-$evListObject->count(); // 20
-```
-
-## List with range queries
-The range parameters are formatted as "$timestamp/$ordinal" where $ordinal is optional. The timestamp value should be formatted as described in [timestamps](https://orchestrate.io/docs/apiref#events-timestamps).
-```php
-use SocalNick\Orchestrate\EventListOperation;
-$evListOp = new EventListOperation("films", "pulp_fiction", "comment", 20, $startEvent, $afterEvent, $beforeEvent, $endEvent);
-$evListObject = $client->execute($evListOp);
+use SocalNick\Orchestrate\EventFetchOperation;
+$evFetchOp = new EventFetchOperation("films", "pulp_fiction", "comment", 1395029140000, 1395029140001);
+$evObject = $client->execute($evFetchOp);
+$count = $evObject->count(); // 1
 ```
 
 # Graph

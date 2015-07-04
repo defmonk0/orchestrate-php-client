@@ -7,16 +7,14 @@ class EventObject
   protected $collection;
   protected $key;
   protected $type;
-  protected $ref;
   protected $value;
   protected $rawValue;
 
-  public function __construct($collection, $key, $type, $ref, $value = null, $rawValue = null)
+  public function __construct($collection, $key, $type, $value = null, $rawValue = null)
   {
     $this->collection = $collection;
     $this->key = $key;
     $this->type = $type;
-    $this->ref = $ref;
     $this->value = $value;
     $this->rawValue = $rawValue;
   }
@@ -36,11 +34,6 @@ class EventObject
     return $this->type;
   }
 
-  public function getRef()
-  {
-    return $this->ref;
-  }
-
   public function getValue()
   {
     return $this->value;
@@ -49,5 +42,12 @@ class EventObject
   public function getRawValue()
   {
     return $this->rawValue;
+  }
+
+  public function count()
+  {
+    if (isset($this->value['count'])) {
+      return $this->value['count'];
+    }
   }
 }

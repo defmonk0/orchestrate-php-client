@@ -16,11 +16,6 @@ class CollectionDeleteOperation implements DeleteOperationInterface
     return $this->collection . '?force=true';
   }
 
-  public function getHeaders()
-  {
-    return [];
-  }
-
   public function getObjectFromResponse($ref, $location = null, $value = null, $rawValue = null)
   {
     return true;
